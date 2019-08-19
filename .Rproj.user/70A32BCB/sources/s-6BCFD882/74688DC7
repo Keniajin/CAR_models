@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1566200517948.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1755855540",
+    "id" : "74688DC7",
+    "lastKnownWriteTime" : 1566253102,
+    "last_content_update" : 1566253102836,
+    "path" : "H:/PhD_work/courses/WIts/CAR_model/codes/car_model.R",
+    "project_path" : "codes/car_model.R",
+    "properties" : {
+        "cursorPosition" : "353,0",
+        "scrollLine" : "344",
+        "tempName" : "Untitled3"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

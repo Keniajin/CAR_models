@@ -1,0 +1,9 @@
+## Install the package transprot
+
+
+## To run the shiny application
+`library(devtools)`
+
+`devtools::install("transprot")`
+
+`transprot::launch_transprot()`

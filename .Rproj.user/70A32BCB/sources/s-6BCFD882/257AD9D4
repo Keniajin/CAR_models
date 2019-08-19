@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1566226320219.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "257AD9D4",
+    "lastKnownWriteTime" : 1501738458,
+    "last_content_update" : 1501738458,
+    "path" : "F:/drive_D_Data_KWTRP/Wits/Project/analysis/code/spatial_bugs.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "113,0",
+        "scrollLine" : "100"
+    },
+    "relative_order" : 10,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
