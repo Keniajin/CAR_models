@@ -1,0 +1,39 @@
+model {
+#Likelihood
+for( i in 1 : N ) {
+			Stunting[i] ~ dnorm(mu[i], tau)  
+			mu[i]<-beta[1]+
+			  beta[2]*equals(Education[i],1)+
+			  beta[3]*equals(Education[i],2)+
+			  beta[4]*equals(b4[i],2)+
+			  beta[5]*equals(v025[i],2)+  
+			  beta[6]*equals(Employed[i],1)+
+			beta[7]*BMI[i]+beta[8]*b19[i]+
+			   u[id_2[i]] + Phi[id_2[i]]
+}
+#Priors
+for (i in 1:8)
+{
+ beta[i]~dnorm(0.0, 0.001)
+}                           
+###### Unstructured groups
+for (k in 1:60) 
+ {
+ u[k] ~ dnorm(0,tauu)
+}
+                        
+###### CAR prior distribution for structured random effects: 
+# Bivariate CAR Prior for Phi -- Spatial Main Effects
+
+Phi[1:60] ~ car.normal(adj[], weights[], num[], tau)     # num specifies no. of neighbors 
+
+for(i in 1:sumNumNeigh){weights[i] <- 1}  	
+
+###### Hyperpriors
+tauu ~ dgamma(0.01, 0.01)
+tau  ~ dgamma(0.5, 0.0005)
+#tauVal <- loggam(tau)
+tauh  ~ dgamma(0.5, 0.0005)
+
+                   	
+}

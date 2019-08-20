@@ -196,7 +196,7 @@ model_bugs <-  R2OpenBUGS::bugs(data = data_model,
                                 debug = F,DIC=TRUE,clearWD = TRUE,
                                 ## uncomment below for WinBUGs
                                 ##bugs.dir = "C:/Program Files (x86)/WinBUGS14/",
-                                working.directory = file.path(paste0(getwd(),"codas")))
+                                working.directory = file.path(getwd(),"codas"))
 
 
 coda_res   <- R2OpenBUGS::read.bugs("H:/PhD_work/courses/WIts/CAR_model/CODAchain1.txt")
