@@ -1,3 +1,25 @@
+### install all packages we need 
+## install many packages at a go
+install.packages("ggplot")
+install.packages("mcmcplots")
+install.packages("readstata13")
+install.packages("callr")
+install.packages("dplyr")
+install.packages("R2WinBUGS")
+packagesLoad <-c("R2OpenBUGS","dplyr","rgeos",
+                 "maptools","broom","rgdal","rgeos",
+                 "mcmc","spdep","data.table")
+for(i in 1:length(packagesLoad)){
+  if(require(packagesLoad[i],
+             character.only = TRUE)==FALSE){
+    install.packages(packagesLoad[i]);
+  }}
+##install INLA 
+install.packages("INLA", repos=c(getOption("repos"),
+    INLA="https://inla.r-inla-download.org/R/stable"),
+                 dep=TRUE)
+
+
 ## load the packages needed for this module
 library(R2OpenBUGS) ## Help in connecting R to WinBugs
 library(dplyr) ## package for data manipulation
@@ -12,19 +34,24 @@ library(data.table)
 library("PerformanceAnalytics") ## EDA
 library(INLA) ## inla
 library(ggplot2)
-
+library(readstata13)
 
 ## remove the data in the environment
 rm(list = ls())
 
+## set working directory to  the folder where you downloaded the files
+##uncomment to  
+#setwd("H:/courses/WIts/CAR_model/CAR_in_R")
+
 ###reading and exporting the shape file
 ## what are comple files of a shape file??? --> dbf file , prj file, shp file , shx
-zim_shp <- maptools::readShapePoly("zim_shape/ZWE_adm2.shp",
+zim_shp <- maptools::readShapePoly("ZWE_adm2.shp",
                                         IDvar="ID_2")
 plot(zim_shp, border="red", axes=TRUE, las=1 )
 
 ## what R is reccommending 
-zim_OGR <-  rgdal::readOGR("zim_shape/ZWE_adm2.shp")
+zim_OGR <-  rgdal::readOGR("ZWE_adm2.shp")
+
 plot(zim_OGR, border="blue", axes=TRUE, las=1)
 
 #Our first check should be to see if the spatial geometry is valid– 
@@ -34,15 +61,13 @@ plot(zim_OGR, border="blue", axes=TRUE, las=1)
 zim_valid <- data.table(valid=gIsValid(zim_OGR,byid=TRUE))
 sum(zim_valid$valid==F)
 
-
 ## export a file to use in WinBugs called Splus
 ## example of splus map in Open Bugs
 ###then open wibug as a text file import the map
 ## sp2WB - the function exports an sp SpatialPolygons object into a 
 ## S-Plus map format to be import by WinBUGS.
 maptools::sp2WB(map =as(zim_shp, "SpatialPolygons"),
-                filename="zim_shape/zim_spus" )
-
+                filename="zim_splus" )
 
 ## get the adjacency matrix for the map
 ## ### adjacency matrix from Arcmap using Adjacency for Winbugs Addon -- how you can get it in bugs
@@ -52,10 +77,8 @@ num <- sapply(zim_nb, length)
 adj <- unlist(zim_nb)
 sumNumNeigh <- length(unlist(zim_nb))
 
-
-
 ## load the data set of interest
-zim_child_data <- readstata13::read.dta13("data/Data2_old.dta")
+zim_child_data <- readstata13::read.dta13("Data2_old.dta")
 dplyr::glimpse(zim_child_data)
 
 ## EDA
@@ -83,10 +106,9 @@ par(mfrow = c(1,1))
 
 ## lets go to BUGS to fit a CAR model
 ## select the variables of interest
-
-
 zim_child_model <- zim_child_data %>%  
-  select(id_2 , name_1 , name_2 , Stunting, Employed, b19, Education, b4, v025, BMI)
+  select(id_2 , name_1 , name_2 , Stunting,
+         Employed, b19, Education, b4, v025, BMI)
 zim_child_model <- zim_child_model[complete.cases(zim_child_model),]
 
 ## check whether the ID_2 on the shape file corresponds to what you have in your data
@@ -194,15 +216,15 @@ model_bugs <-  R2OpenBUGS::bugs(data = data_model,
                                 model.file="bugs_models.txt",
                                 inits=inits_Vals,
                                 parameters.to.save = params,
-                                n.chains=1,n.iter=1000,
-                                n.burnin=200,n.thin=10,codaPkg=T,digits = 5,
+                                n.chains=1,n.iter=10000,
+                                n.burnin=2000,n.thin=10,codaPkg=T,digits = 5,
                                 debug = F,DIC=TRUE,clearWD = TRUE,
                                 ## uncomment below for WinBUGs
                                 ##bugs.dir = "C:/Program Files (x86)/WinBUGS14/",
-                                working.directory = file.path(getwd(),"codas"))
+                                working.directory = file.path(getwd()))
 
 
-coda_res   <- R2OpenBUGS::read.bugs("codas/CODAchain1.txt")
+coda_res   <- R2OpenBUGS::read.bugs("CODAchain1.txt")
 
 ##
 # Get the posterior means of the model parameters
@@ -210,9 +232,9 @@ summary_model <- summary(coda_res)
 summary_model$statistics
 
 ## diagnostics
-dir.create("results/str_unstru/figures", recursive = T)
+dir.create("results/figures", recursive = T)
 mcmcplots::mcmcplot(coda_res, 
-                    dir=file.path(getwd(),"results/str_unstru/figures") ,
+                    dir=file.path(getwd(),"results/figures") ,
                     regex = "beta|Phi")
 
 ## add the mean to a plot
@@ -238,16 +260,14 @@ glimpse(zim_shp_df)
 p1 <- ggplot() + 
   geom_polygon(data = zim_shp_df, aes(x = long, y = lat,
                                   group = group,
-                                  fill = Mean), colour = "white") + theme_void()
+                                  fill = Mean), colour = "white") + 
+  theme_void()
 p1
 
 
 
 
-
-
-
-
+#######################INLA Model##############################
 ## fit the model in INLA
 ## It uses the Integrated Nested Laplace Approximation, 
 #a deterministic Bayesian method
@@ -256,7 +276,7 @@ form_fit <-  Stunting ~1+ Employed +b19  +
   as.factor(Education) + b4+ v025+ BMI
 #where 1 means that the model includes the intercept and
 
-model_linear <- inla(formula,family="gaussian",data=zim_child_model,
+model_linear <- inla(form_fit,family="gaussian",data=zim_child_model,
                       control.compute=list(dic=TRUE, waic=TRUE))
 
 summary(model_linear)
@@ -278,14 +298,14 @@ plot(model_linear$marginals.fixed[[2]],
 ## Spatial Model
 ## convert our neighbour map to an inla intergrated map
 
-nb2INLA("zim_shape/zim_inla.graph", zim_nb)
-zim_adj <- paste(getwd(),"/zim_shape/zim_inla.graph", sep="")
+spdep::nb2INLA("zim_inla.graph", zim_nb)
+zim_adj <- paste(getwd(),"zim_inla.graph", sep="")
 
 
 ## Adjacency matrix for the ZIM example: rows and columns
 ## identify areas; squares identify neighbors
 ## plot the neigbour map
-H <- inla.read.graph(filename="zim_shape/zim_inla.graph")
+H <- inla.read.graph(filename="zim_inla.graph")
 image(inla.graph2matrix(H),xlab="",ylab="")
 
 ### After having defined the neighborhood structure, 
@@ -301,7 +321,7 @@ model_inla <- inla(formula_inla,family="gaussian",
                      data=zim_child_model,
                      control.compute=list(dic=TRUE))
  
-summary(model_inla) #inla --> 17218.91(15.09) ##linear model--> 17272.83(9.444)
+summary(model_inla) #inla --> DIC 17218.91(pd =15.09) ##linear model--> DIC 17272.83(pd = 9.444)
 
 
 ## summary of the fixed effect
