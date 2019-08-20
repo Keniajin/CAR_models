@@ -4,9 +4,9 @@ model compiled
 initial values loaded but chain contains uninitialized variables
 initial values generated, model initialized
 model is updating
-2000 updates took 270 s
+2000 updates took 219 s
 model is updating
-8000 updates took 1093 s
+8000 updates took 874 s
 CODA files written
 Summary statistics
 		mean	sd	val2.5pc	median	val97.5pc	sample

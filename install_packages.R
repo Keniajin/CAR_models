@@ -1,8 +1,13 @@
 ## install many packages at a go
-packagesLoad <-c("R2OpenBUGS","tidyverse","rgeos",
+install.packages("ggplot")
+install.packages("mcmcplots")
+install.packages("readstata13")
+install.packages("callr")
+install.packages("dplyr")
+install.packages("R2WinBUGS")
+packagesLoad <-c("R2OpenBUGS","dplyr","rgeos",
                  "maptools","broom","rgdal","rgeos",
-                 "mcmc","spdep","data.table","haven",
-                 "PerformanceAnalytics")
+                 "mcmc","spdep","data.table")
 for(i in 1:length(packagesLoad)){
   if(require(packagesLoad[i],
              character.only = TRUE)==FALSE){

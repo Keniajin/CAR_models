@@ -1,6 +1,6 @@
 ## load the packages needed for this module
-library(R2WinBUGS) ## Help in connecting R to WinBugs
-library(tidyverse) ## package for data manipulation
+library(R2OpenBUGS) ## Help in connecting R to WinBugs
+library(dplyr) ## package for data manipulation
 library(rgeos) ## Geomegry Engine- Open Source (GEOS)
 library(maptools) ##  R package with useful map tools
 library(broom) ## for converting a map to a data frame
@@ -9,9 +9,9 @@ library(rgeos) # # "Geomegry Engine- Open Source (GEOS)" -- check your shape fil
 library(mcmc)
 library(spdep)
 library(data.table)
-library(haven) ## read in stata files
 library("PerformanceAnalytics") ## EDA
 library(INLA) ## inla
+library(ggplot2)
 
 
 ## remove the data in the environment
@@ -55,13 +55,14 @@ sumNumNeigh <- length(unlist(zim_nb))
 
 
 ## load the data set of interest
-zim_child_data <- haven::read_dta("data/Data2.dta")
+zim_child_data <- readstata13::read.dta13("data/Data2_old.dta")
 dplyr::glimpse(zim_child_data)
 
 ## EDA
 eda_data <- zim_child_data %>% 
   select(Stunting, Employed, b19, Education, b4 , v025, BMI)
-PerformanceAnalytics::chart.Correlation(eda_data, histogram=TRUE, pch=19)
+## works on R version 3.6.1
+#PerformanceAnalytics::chart.Correlation(eda_data, histogram=TRUE, pch=19)
 
 ## fit 
 form_fit <- Stunting ~ Employed +b19  +  as.factor(Education) + b4+ v025+ BMI
@@ -89,7 +90,7 @@ zim_child_model <- zim_child_data %>%
 zim_child_model <- zim_child_model[complete.cases(zim_child_model),]
 
 ## check whether the ID_2 on the shape file corresponds to what you have in your data
-table(zim_shp@data$ID_2 %in% zim_child_model$ID_2)
+table(zim_shp@data$ID_2 %in% zim_child_model$id_2)
 table(zim_shp@data$NAME_2 %in% zim_child_model$name_1)
 
 
@@ -187,19 +188,21 @@ inits_Vals <-  function(){
   list(beta = c(0,0,0,0,0,0,0,0))
 }
 
+
+## run the bugs model and save the results in
 model_bugs <-  R2OpenBUGS::bugs(data = data_model,
                                 model.file="bugs_models.txt",
                                 inits=inits_Vals,
                                 parameters.to.save = params,
-                                n.chains=1,n.iter=10000,
-                                n.burnin=2000,n.thin=10,codaPkg=T,digits = 5,
+                                n.chains=1,n.iter=1000,
+                                n.burnin=200,n.thin=10,codaPkg=T,digits = 5,
                                 debug = F,DIC=TRUE,clearWD = TRUE,
                                 ## uncomment below for WinBUGs
                                 ##bugs.dir = "C:/Program Files (x86)/WinBUGS14/",
                                 working.directory = file.path(getwd(),"codas"))
 
 
-coda_res   <- R2OpenBUGS::read.bugs("H:/PhD_work/courses/WIts/CAR_model/CODAchain1.txt")
+coda_res   <- R2OpenBUGS::read.bugs("codas/CODAchain1.txt")
 
 ##
 # Get the posterior means of the model parameters
@@ -237,6 +240,7 @@ p1 <- ggplot() +
                                   group = group,
                                   fill = Mean), colour = "white") + theme_void()
 p1
+
 
 
 
