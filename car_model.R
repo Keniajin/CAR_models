@@ -78,7 +78,9 @@ adj <- unlist(zim_nb)
 sumNumNeigh <- length(unlist(zim_nb))
 
 ## load the data set of interest
-zim_child_data <- readstata13::read.dta13("Data2_old.dta")
+#zim_child_data <- readstata13::read.dta13("Data2_old.dta")
+zim_child_data <- haven::read_dta("Data2.dta")
+
 dplyr::glimpse(zim_child_data)
 
 ## EDA
@@ -299,7 +301,7 @@ plot(model_linear$marginals.fixed[[2]],
 ## convert our neighbour map to an inla intergrated map
 
 spdep::nb2INLA("zim_inla.graph", zim_nb)
-zim_adj <- paste(getwd(),"zim_inla.graph", sep="")
+zim_adj <- paste(getwd(),"/zim_inla.graph", sep="")
 
 
 ## Adjacency matrix for the ZIM example: rows and columns
