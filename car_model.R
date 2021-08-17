@@ -40,6 +40,7 @@ library(readstata13)
 rm(list = ls())
 
 ## set working directory to  the folder where you downloaded the files
+## If you open the project folder you dont need to set the working directory
 ##uncomment to  
 #setwd("H:/courses/WIts/CAR_model/CAR_in_R")
 
@@ -119,12 +120,14 @@ table(zim_shp@data$NAME_2 %in% zim_child_model$name_1)
 
 
 ###modelling 
+## Define the number of neighbours
 num = c(5, 7, 8, 4, 4, 8, 5, 3, 4, 7, 
         5, 5, 8, 6, 4, 8, 8, 8, 7, 4, 
         7, 5, 8, 7, 6, 6, 5, 10, 3, 6, 
         7, 7, 7, 6, 6, 8, 7, 4, 5, 8, 
         4, 7, 6, 4, 8, 3, 6, 6, 9, 2, 
         6, 6, 7, 6, 6, 6, 6, 5, 6, 5)
+## define the adjacent polygons 
 adj = c(
   52, 51, 47, 45, 40, 
   31, 26, 23, 19, 18, 13, 10, 
@@ -186,7 +189,10 @@ adj = c(
   60, 49, 48, 37, 34, 
   60, 56, 53, 49, 36, 34, 
   59, 58, 49, 37, 34)
+## total neighbours
 sumNumNeigh = 360
+
+## create the data model to pass to winbugs
 data_model <- list("N"=length(zim_child_model$Stunting) , 
                    "adj"=adj,"num"=num ,
                   "sumNumNeigh" =sumNumNeigh,
@@ -199,10 +205,10 @@ data_model <- list("N"=length(zim_child_model$Stunting) ,
                   "b19"=as.numeric(zim_child_model$b19), 
                   "id_2"=zim_child_model$id_2)
 names(data_model)
-R2WinBUGS::bugs.data(data_model , dir = "bugs_data", 
-                     digits = 4,
-                     data.file="zim_child_model.txt")
-#options("scipen"=100, "digits"=4)
+
+## set the number of decimal places
+
+options("scipen"=100, "digits"=4)
 
 ### 
 ####defining the initials
@@ -213,7 +219,8 @@ inits_Vals <-  function(){
 }
 
 
-## run the bugs model and save the results in
+## run the bugs model and save the results in model_bugs
+## the code below runs with openBugs
 model_bugs <-  R2OpenBUGS::bugs(data = data_model,
                                 model.file="bugs_models.txt",
                                 inits=inits_Vals,
@@ -225,7 +232,7 @@ model_bugs <-  R2OpenBUGS::bugs(data = data_model,
                                 ##bugs.dir = "C:/Program Files (x86)/WinBUGS14/",
                                 working.directory = file.path(getwd()))
 
-
+### read the saved coda
 coda_res   <- R2OpenBUGS::read.bugs("CODAchain1.txt")
 
 ##
@@ -233,7 +240,8 @@ coda_res   <- R2OpenBUGS::read.bugs("CODAchain1.txt")
 summary_model <- summary(coda_res)
 summary_model$statistics
 
-## diagnostics
+## diagnostics plots
+## creat the folder to save the diagnostic plots
 dir.create("results/figures", recursive = T)
 mcmcplots::mcmcplot(coda_res, 
                     dir=file.path(getwd(),"results/figures") ,
@@ -267,6 +275,10 @@ p1 <- ggplot() +
 p1
 
 
+## save the file
+ggpubr::ggexport("p1_bugs.png",p1)
+
+
 
 
 #######################INLA Model##############################
@@ -276,13 +288,12 @@ p1
 
 form_fit <-  Stunting ~1+ Employed +b19  + 
   as.factor(Education) + b4+ v025+ BMI
-#where 1 means that the model includes the intercept and
 
+#where 1 means that the model includes the intercept and
 model_linear <- inla(form_fit,family="gaussian",data=zim_child_model,
                       control.compute=list(dic=TRUE, waic=TRUE))
 
 summary(model_linear)
-summary(lin_mod)
 round(model_linear$summary.fixed[,1:5],3)
 
 ## Posterior density plot for the intercepts
@@ -299,7 +310,6 @@ plot(model_linear$marginals.fixed[[2]],
 
 ## Spatial Model
 ## convert our neighbour map to an inla intergrated map
-
 spdep::nb2INLA("zim_inla.graph", zim_nb)
 zim_adj <- paste(getwd(),"/zim_inla.graph", sep="")
 
@@ -366,6 +376,7 @@ zim_shp_df <- zim_shp_df %>%
 
 glimpse(zim_shp_df)
 
+## plot the results from INLA
 p2 <- ggplot() + 
   geom_polygon(data = zim_shp_df, aes(x = long, y = lat,
                                       group = group,
@@ -377,6 +388,7 @@ p2
 p1 <- p1 + scale_fill_continuous(high = "#fff7ec", low = "#7F0000") +
   ggtitle("Open Bugs Fit") + labs(fill = "Average HAZ")
 
+## combine both inla and Bugs plots
 gridExtra::grid.arrange(p1,p2) 
 
 
