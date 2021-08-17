@@ -1,0 +1,6 @@
+## CAR Models in R and RStudio 
+This is a course for 
+ - MSc Epidemiology MODULE COMH7268A_2021 : SPATIAL ANALYSIS AND GIS IN PUBLIC HEALTH
+ - BIOSTATISTICS MODULE COMH7246A_2021 : APPLIED SPATIAL STATISTICS FOR HEALTH RESEARCHERS
+
+It introduces CAR models using R-INLA (Laplace Approximation) and R2OpenBugs (MCMC)
