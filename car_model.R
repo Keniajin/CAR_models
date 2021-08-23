@@ -1,11 +1,11 @@
 ### install all packages we need 
 ## install many packages at a go
-install.packages("ggplot")
-install.packages("mcmcplots")
-install.packages("readstata13")
-install.packages("callr")
-install.packages("dplyr")
-install.packages("R2WinBUGS")
+# install.packages("ggplot2")
+# install.packages("mcmcplots")
+# install.packages("readstata13")
+# install.packages("callr")
+# install.packages("dplyr")
+# install.packages("R2WinBUGS")
 packagesLoad <-c("R2OpenBUGS","dplyr","rgeos",
                  "maptools","broom","rgdal","rgeos",
                  "mcmc","spdep","data.table")
@@ -46,12 +46,12 @@ rm(list = ls())
 
 ###reading and exporting the shape file
 ## what are comple files of a shape file??? --> dbf file , prj file, shp file , shx
-zim_shp <- maptools::readShapePoly("ZWE_adm2.shp",
+zim_shp <- maptools::readShapePoly("zim_shape/ZWE_adm2.shp",
                                         IDvar="ID_2")
 plot(zim_shp, border="red", axes=TRUE, las=1 )
 
 ## what R is reccommending 
-zim_OGR <-  rgdal::readOGR("ZWE_adm2.shp")
+zim_OGR <-  rgdal::readOGR("zim_shape/ZWE_adm2.shp")
 
 plot(zim_OGR, border="blue", axes=TRUE, las=1)
 
@@ -79,8 +79,8 @@ adj <- unlist(zim_nb)
 sumNumNeigh <- length(unlist(zim_nb))
 
 ## load the data set of interest
-#zim_child_data <- readstata13::read.dta13("Data2_old.dta")
-zim_child_data <- haven::read_dta("Data2.dta")
+zim_child_data <- readstata13::read.dta13("data/Data2_old.dta")
+#zim_child_data <- haven::read_dta("Data2.dta")
 
 dplyr::glimpse(zim_child_data)
 
@@ -320,8 +320,15 @@ zim_adj <- paste(getwd(),"/zim_inla.graph", sep="")
 H <- inla.read.graph(filename="zim_inla.graph")
 image(inla.graph2matrix(H),xlab="",ylab="")
 
-### After having defined the neighborhood structure, 
+### After having defined the neighbourhood structure, 
 ## we need to specify the formula for the model, through
+# https://www.paulamoraga.com/book-geospatial/sec-arealdatatheory.html
+## Bym is 
+#A popular spatial model in disease mapping applications is the Besag-York-Mollié (BYM) 
+# (Besag, York, and Mollié 1991). In this model, the spatial random effect ui is 
+#assigned a Conditional Autoregressive (CAR) distribution which smoothes the data 
+#according to a certain neighborhood structure that specifies that two areas are 
+#neighbors if they share a common boundary
 formula_inla <- Stunting ~ 1 + as.factor(Employed) +
   b19  + as.factor(Education) + b4+ v025+ BMI+
   f(id_2, model="bym",graph=zim_adj, scale.model=TRUE,
@@ -349,7 +356,7 @@ round(head(model_inla$summary.random$id_2),3)
 # we extract the marginal posterior distribution for each element of the random effect
 csi <- model_inla$marginals.random$id_2[1:60]
 
-# *** Code for posterior probablity
+# *** Code for posterior probability
 a <- 0
 prob_csi <- lapply(csi, function(x) {1 - inla.pmarginal(a, x)})
 ## for each location estimate the probability in continous
